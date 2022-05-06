@@ -9,51 +9,63 @@ namespace AnalyzerTemplate.Test
     [TestClass]
     public class AnalyzerTemplateUnitTest
     {
-        //No diagnostics expected to show up
-        [TestMethod]
-        public async Task TestMethod1()
-        {
-            var test = @"";
-
-            await VerifyCS.VerifyAnalyzerAsync(test);
-        }
 
         //Diagnostic and CodeFix both triggered and checked for
         [TestMethod]
         public async Task TestMethod2()
         {
             var test = @"
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using System.Threading.Tasks;
-    using System.Diagnostics;
+using System;
 
-    namespace ConsoleApplication1
+namespace HelloWorld
+{
+    class Program
     {
-        class {|#0:TypeName|}
-        {   
+        static void Main(string[] args)
+        {
+            var a = 0;
+            if (a == 1) { a++; }
+            else if (a == 2) { a++; }
+            else {
+                [|if|] (a == 0) { a++; }
+                else { a++; }
+            }
         }
-    }";
+    }
+}";
 
             var fixtest = @"
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using System.Threading.Tasks;
-    using System.Diagnostics;
+using System;
 
-    namespace ConsoleApplication1
+namespace HelloWorld
+{
+    class Program
     {
-        class TYPENAME
-        {   
+        static void Main(string[] args)
+        {
+            var a = 0;
+            if (a == 1) 
+            {
+                a++;
+            }
+            else if (a == 2) 
+            {
+                a++;
+            }
+            else if (a == 0)    
+            {
+                a++;
+            }
+            else 
+            {
+                a++;
+            }
         }
-    }";
+    }
+}";
 
-            var expected = VerifyCS.Diagnostic("AnalyzerTemplate").WithLocation(0).WithArguments("TypeName");
-            await VerifyCS.VerifyCodeFixAsync(test, expected, fixtest);
+            //var expected = VerifyCS.Diagnostic("AnalyzerTemplate").WithLocation(0).WithArguments("TypeName");
+            await VerifyCS.VerifyCodeFixAsync(test, fixtest);
         }
     }
 }

@@ -28,12 +28,48 @@ namespace AnalyzerTemplate
 
         public override void Initialize(AnalysisContext context)
         {
-            context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
             context.EnableConcurrentExecution();
+            /*context.RegisterSyntaxTreeAction(syntaxTreeContext =>
+            {
+                // Iterate through all statements in the tree
+                var tree = syntaxTreeContext.Tree;
+                var root = tree.GetRoot(syntaxTreeContext.CancellationToken);
+                var compilation = CSharpCompilation.Create("")
+                    .AddReferences(MetadataReference.CreateFromFile(
+                    typeof(string).Assembly.Location))
+                    .AddSyntaxTrees(tree);
+                var model = compilation.GetSemanticModel(tree);
 
-            // TODO: Consider registering other actions that act on syntax instead of or in addition to symbols
-            // See https://github.com/dotnet/roslyn/blob/main/docs/analyzers/Analyzer%20Actions%20Semantics.md for more information
-            context.RegisterSymbolAction(AnalyzeSymbol, SymbolKind.NamedType);
+                var collector = new ElseWalker();
+                collector.Visit(root);
+                foreach (var directive in collector.Collection)
+                {
+                    if (directive.Parent.IsKind(SyntaxKind.ElseClause))
+                        continue;
+                    if (!new PossibleToTransform1().IsPossibleToTransform(directive, semanticModel))
+                        continue;
+                    var diagnostic = Diagnostic.Create(Rule, directive.GetFirstToken().GetLocation());
+                    syntaxTreeContext.ReportDiagnostic(diagnostic);
+                }
+
+            });*/
+
+            context.RegisterSemanticModelAction(semanticModelAnalysisContext =>
+            {
+                SemanticModel semanticModel = semanticModelAnalysisContext.SemanticModel;
+                SyntaxNode root = semanticModel.SyntaxTree.GetRoot();
+
+                var collector = new ElseWalker();
+                collector.Visit(root);
+                foreach (var directive in collector.Collection)
+                {
+                    /*if (!new PossibleToTransform1().IsPossibleToTransform(directive, semanticModel))
+                        continue;*/
+
+                    var diagnostic = Diagnostic.Create(Rule, directive.GetFirstToken().GetLocation());
+                    semanticModelAnalysisContext.ReportDiagnostic(diagnostic);
+                }
+            });
         }
 
         private static void AnalyzeSymbol(SymbolAnalysisContext context)
