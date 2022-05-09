@@ -28,12 +28,19 @@ namespace AnalyzerTemplate
 
         public override void Initialize(AnalysisContext context)
         {
-            context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
-            context.EnableConcurrentExecution();
+            context.RegisterSyntaxTreeAction(syntaxTreeContext =>
+            {
+                var root = syntaxTreeContext.Tree.GetRoot(syntaxTreeContext.CancellationToken);
 
-            // TODO: Consider registering other actions that act on syntax instead of or in addition to symbols
-            // See https://github.com/dotnet/roslyn/blob/main/docs/analyzers/Analyzer%20Actions%20Semantics.md for more information
-            context.RegisterSymbolAction(AnalyzeSymbol, SymbolKind.NamedType);
+                var case1 = from expression in root.DescendantNodes().OfType<BinaryExpressionSyntax>()
+                            where expression.IsKind(SyntaxKind.EqualsExpression)
+                            select expression;
+                foreach (var directive in case1)
+                {
+                    var diagnostic = Diagnostic.Create(Rule, directive.GetLocation());
+                    syntaxTreeContext.ReportDiagnostic(diagnostic);
+                }
+            });
         }
 
         private static void AnalyzeSymbol(SymbolAnalysisContext context)
