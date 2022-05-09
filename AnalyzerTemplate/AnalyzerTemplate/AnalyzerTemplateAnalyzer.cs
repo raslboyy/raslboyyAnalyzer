@@ -28,17 +28,19 @@ namespace AnalyzerTemplate
 
         public override void Initialize(AnalysisContext context)
         {
-            context.RegisterSyntaxTreeAction(syntaxTreeContext =>
+            context.RegisterSemanticModelAction(semanticModelAnalysisContext =>
             {
-                var root = syntaxTreeContext.Tree.GetRoot(syntaxTreeContext.CancellationToken);
+                SemanticModel semanticModel = semanticModelAnalysisContext.SemanticModel;
+                SyntaxNode root = semanticModel.SyntaxTree.GetRoot();
 
-                var case1 = from expression in root.DescendantNodes().OfType<BinaryExpressionSyntax>()
+                var case3 = from expression in root.DescendantNodes().OfType<BinaryExpressionSyntax>()
                             where expression.IsKind(SyntaxKind.EqualsExpression)
+                            where new Case3().Check(semanticModel, expression)
                             select expression;
-                foreach (var directive in case1)
+                foreach (var directive in case3)
                 {
                     var diagnostic = Diagnostic.Create(Rule, directive.GetLocation());
-                    syntaxTreeContext.ReportDiagnostic(diagnostic);
+                    semanticModelAnalysisContext.ReportDiagnostic(diagnostic);
                 }
             });
         }

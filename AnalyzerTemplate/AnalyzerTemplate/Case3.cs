@@ -12,7 +12,6 @@ namespace AnalyzerTemplate
     {
         public bool Check(SemanticModel model, BinaryExpressionSyntax expression)
         {
-            const string equalityMethodName = "op_Equality";
             var left = expression.Left;
             var right = expression.Right;
             var leftType = model.GetTypeInfo(left).Type;
@@ -33,10 +32,6 @@ namespace AnalyzerTemplate
             var declaration = (left.DeclaringSyntaxReferences.FirstOrDefault()
                     .GetSyntax() as ClassDeclarationSyntax);
             var allOperators = declaration.Members.OfType<OperatorDeclarationSyntax>().ToList();
-            //Console.WriteLine(allOperators[0].ParameterList.Parameters[0].Type.ToString());
-            //Console.WriteLine(left.ToString());
-            //Console.WriteLine(allOperators[0].ParameterList.Parameters[1].Type.ToString());
-            //Console.WriteLine(right.ToString());
             if (allOperators.Where(m =>
             left.ToString().Contains(m.ParameterList.Parameters[0].Type.ToString()) && right.ToString().Contains(m.ParameterList.Parameters[1].Type.ToString())
             || left.ToString().Contains(m.ParameterList.Parameters[1].Type.ToString()) && right.ToString().Contains(m.ParameterList.Parameters[0].Type.ToString())).Count() != 0)
