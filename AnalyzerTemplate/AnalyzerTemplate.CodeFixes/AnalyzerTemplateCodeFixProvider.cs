@@ -45,16 +45,32 @@ namespace AnalyzerTemplate
             context.RegisterCodeFix(
                 CodeAction.Create(
                     title: title,
-                    createChangedDocument: c => AddBracesAsync(context.Document, diagnostic, root),
+                    createChangedDocument: c => ToEquals(context.Document, diagnostic, root),
                     equivalenceKey: title),
                 diagnostic);
         }
 
-        Task<Document> AddBracesAsync(Document document, Diagnostic diagnostic, SyntaxNode root)
+        Task<Document> ToEquals(Document document, Diagnostic diagnostic, SyntaxNode root)
         {
-            // var statement = root.FindNode(diagnostic.Location.SourceSpan).FirstAncestorOrSelf<StatementSyntax>();
-            // var newRoot = root.ReplaceNode(statement, SyntaxFactory.Block(statement));
-            return Task.FromResult(document.WithSyntaxRoot(root));
+            var expression = root.FindNode(diagnostic.Location.SourceSpan).FirstAncestorOrSelf<BinaryExpressionSyntax>();
+            var newNode =
+                SyntaxFactory.InvocationExpression(
+                    SyntaxFactory.MemberAccessExpression(
+                        SyntaxKind.SimpleMemberAccessExpression,
+                        expression.Left.FirstAncestorOrSelf<IdentifierNameSyntax>(),
+                        SyntaxFactory.IdentifierName(@"Equals")
+                        )
+                    .WithOperatorToken(SyntaxFactory.Token(SyntaxKind.DotToken))
+                )
+                .WithArgumentList(
+                    SyntaxFactory.ArgumentList(
+                        SyntaxFactory.SingletonSeparatedList<ArgumentSyntax>(
+                            SyntaxFactory.Argument(expression.Right.FirstAncestorOrSelf<IdentifierNameSyntax>())
+                            )
+                        )
+                ).NormalizeWhitespace();
+            var newRoot = root.ReplaceNode(expression, newNode);
+            return Task.FromResult(document.WithSyntaxRoot(newRoot));
         }
     }
 }
